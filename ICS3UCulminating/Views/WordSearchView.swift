@@ -23,71 +23,79 @@ struct WordSearchView: View {
     /// The user interface for the entire Word Search screen.
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
+            // On macOS, we use an HStack to put the grid and the word list side-by-side.
+            // This takes advantage of the wider screen space.
+            HStack(alignment: .top, spacing: 30) {
                 
                 // 1. The Word Search Grid
-                // We use GeometryReader to help us figure out which cell the user is dragging over.
-                GeometryReader { geometry in
-                    VStack(spacing: 4) {
-                        ForEach(0..<viewModel.game.grid.count, id: \.self) { rowIndex in
-                            HStack(spacing: 4) {
-                                ForEach(0..<viewModel.game.grid[rowIndex].count, id: \.self) { columnIndex in
-                                    
-                                    // Display the cell using our sub-view.
-                                    // We also tell it if it's currently part of the user's drag selection.
-                                    WordSearchCellView(
-                                        cell: viewModel.game.grid[rowIndex][columnIndex],
-                                        isSelected: viewModel.isCellSelected(row: rowIndex, column: columnIndex)
-                                    )
+                VStack {
+                    GeometryReader { geometry in
+                        VStack(spacing: 4) {
+                            // Loop through each row
+                            ForEach(0..<viewModel.game.grid.count, id: \.self) { rowIndex in
+                                HStack(spacing: 4) {
+                                    // Loop through each cell in the row
+                                    ForEach(0..<viewModel.game.grid[rowIndex].count, id: \.self) { columnIndex in
+                                        
+                                        // Display the cell using our flexible sub-view.
+                                        WordSearchCellView(
+                                            cell: viewModel.game.grid[rowIndex][columnIndex],
+                                            isSelected: viewModel.isCellSelected(row: rowIndex, column: columnIndex)
+                                        )
+                                    }
                                 }
                             }
                         }
+                        // This gesture handles dragging across the letters.
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    updateSelection(at: value.location, in: geometry.size)
+                                }
+                                .onEnded { _ in
+                                    viewModel.finalizeSelection()
+                                }
+                        )
                     }
-                    // This gesture allows the user to press down and drag across the grid.
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { value in
-                                // As the user drags, we update the selection in the ViewModel.
-                                updateSelection(at: value.location, in: geometry.size)
-                            }
-                            .onEnded { _ in
-                                // When the user lets go, we check if they found a word.
-                                viewModel.finalizeSelection()
-                            }
-                    )
+                    // This keeps the grid perfectly square even as the window is resized.
+                    .aspectRatio(1, contentMode: .fit)
                 }
-                // We force the grid to be a square based on the screen width.
-                .aspectRatio(1, contentMode: .fit)
                 .padding()
                 .background(Color.white)
                 .cornerRadius(12)
                 .shadow(radius: 5)
+                // Set a generous frame size for the grid on macOS.
+                .frame(minWidth: 400, maxWidth: 600, minHeight: 400, maxHeight: 600)
                 
-                Divider()
-                
-                // 2. The Word List
-                VStack(alignment: .leading) {
+                // 2. The Word List (Side Panel)
+                VStack(alignment: .leading, spacing: 15) {
                     Text("Words to Find")
-                        .font(.headline)
-                        .padding(.horizontal)
+                        .font(.title2)
+                        .fontWeight(.bold)
                     
-                    List(viewModel.game.words) { word in
-                        HStack {
-                            Text(word.text)
-                                .strikethrough(word.isFound)
-                                .foregroundColor(word.isFound ? .gray : .primary)
-                                .font(.system(.body, design: .monospaced))
-                            
-                            Spacer()
-                            
-                            if word.isFound {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 10) {
+                            ForEach(viewModel.game.words) { word in
+                                HStack {
+                                    Text(word.text)
+                                        .strikethrough(word.isFound)
+                                        .foregroundColor(word.isFound ? .gray : .primary)
+                                        .font(.system(.title3, design: .monospaced))
+                                    
+                                    Spacer()
+                                    
+                                    if word.isFound {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.green)
+                                    }
+                                }
+                                .padding(.vertical, 4)
                             }
                         }
                     }
-                    .listStyle(.plain)
                 }
+                .frame(width: 250) // Fixed width for the word list sidebar
+                .padding()
             }
             .navigationTitle("Word Search")
             .padding()
@@ -96,21 +104,22 @@ struct WordSearchView: View {
     
     // MARK: - Functions
     
-    /// Helper function to convert a touch location (x, y) into a grid position (row, column).
+    /// Helper function to convert a touch/mouse location into a grid position (row, column).
     private func updateSelection(at location: CGPoint, in size: CGSize) {
         let rowCount = viewModel.game.grid.count
         let colCount = viewModel.game.grid[0].count
         
-        // Calculate the width and height of a single cell
+        // Calculate the relative position within the grid
         let cellWidth = size.width / CGFloat(colCount)
         let cellHeight = size.height / CGFloat(rowCount)
         
-        // Use math to find the row and column based on the touch position
         let column = Int(location.x / cellWidth)
         let row = Int(location.y / cellHeight)
         
-        // Tell the ViewModel to add this cell to the selection
-        viewModel.selectCell(row: row, column: column)
+        // Update selection if the mouse is within the grid bounds
+        if row >= 0 && row < rowCount && column >= 0 && column < colCount {
+            viewModel.selectCell(row: row, column: column)
+        }
     }
 }
 

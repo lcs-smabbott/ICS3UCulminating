@@ -26,19 +26,19 @@ struct WordSearchCellView: View {
     var body: some View {
         Text(String(cell.letter))
             // Use a monospaced font so all letters line up perfectly in the grid.
-            .font(.system(.title2, design: .monospaced))
+            // On macOS, we can use a slightly larger font.
+            .font(.system(.title, design: .monospaced))
             .fontWeight(.bold)
-            // Make each cell a fixed size square.
-            // We use a slightly smaller size for the 10x10 grid.
-            .frame(width: 32, height: 32)
+            // Instead of a fixed frame, we allow the cell to expand to fill the space.
+            // This makes the grid responsive to window resizing.
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // We ensure each individual cell stays square.
+            .aspectRatio(1, contentMode: .fit)
             // Change the background color:
-            // - Orange if currently being selected (dragged over)
-            // - Yellow if already part of a found word
-            // - Light blue if it's just a normal cell
             .background(isSelected ? Color.orange : (cell.isFound ? Color.yellow : Color.blue.opacity(0.1)))
-            // Round the corners slightly for a modern look.
+            // Round the corners slightly.
             .cornerRadius(4)
-            // Add a subtle border around each cell.
+            // Add a subtle border.
             .overlay(
                 RoundedRectangle(cornerRadius: 4)
                     .stroke(Color.black.opacity(0.1), lineWidth: 1)
