@@ -109,19 +109,37 @@ func createExample10x10Game() -> WordSearch {
     }
     
     // Manually place some words for the example
-    let wordsToPlace = ["SWIFT", "XCODE", "APPLE", "IPHONE"]
+    // We make sure these words are actually placed in the grid letters!
+    let wordsToPlace = ["SWIFT", "XCODE", "APPLE", "IPHONE", "IPAD"]
     
-    // Note: In a real game, we'd have a function to place these randomly.
-    // For now, let's just place them at fixed positions to ensure they fit.
-    
-    // SWIFT (Row 0, Horizontal)
-    for (index, char) in "SWIFT".enumerated() {
+    // SWIFT (Row 0, Columns 0-4)
+    let swift = "SWIFT"
+    for (index, char) in swift.enumerated() {
         grid[0][index] = WordSearchCell(row: 0, column: index, letter: char)
     }
     
-    // XCODE (Column 9, Vertical)
-    for (index, char) in "XCODE".enumerated() {
+    // XCODE (Row 2, Columns 0-4)
+    let xcode = "XCODE"
+    for (index, char) in xcode.enumerated() {
+        grid[2][index] = WordSearchCell(row: 2, column: index, letter: char)
+    }
+    
+    // APPLE (Row 4, Columns 0-4)
+    let apple = "APPLE"
+    for (index, char) in apple.enumerated() {
+        grid[4][index] = WordSearchCell(row: 4, column: index, letter: char)
+    }
+    
+    // IPHONE (Column 9, Rows 0-5)
+    let iphone = "IPHONE"
+    for (index, char) in iphone.enumerated() {
         grid[index][9] = WordSearchCell(row: index, column: 9, letter: char)
+    }
+    
+    // IPAD (Column 7, Rows 5-8)
+    let ipad = "IPAD"
+    for (index, char) in ipad.enumerated() {
+        grid[5 + index][7] = WordSearchCell(row: 5 + index, column: 7, letter: char)
     }
     
     // Create the WordToFind objects from the strings
