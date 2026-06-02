@@ -17,6 +17,9 @@ struct WordSearchCellView: View {
     /// The specific cell data this view should display.
     let cell: WordSearchCell
     
+    /// Whether this cell is currently being dragged over.
+    let isSelected: Bool
+    
     // MARK: - Computed properties
     
     /// The user interface for a single cell.
@@ -26,9 +29,13 @@ struct WordSearchCellView: View {
             .font(.system(.title2, design: .monospaced))
             .fontWeight(.bold)
             // Make each cell a fixed size square.
-            .frame(width: 40, height: 40)
-            // Change the background color if the cell has been "found".
-            .background(cell.isFound ? Color.yellow : Color.blue.opacity(0.1))
+            // We use a slightly smaller size for the 10x10 grid.
+            .frame(width: 32, height: 32)
+            // Change the background color:
+            // - Orange if currently being selected (dragged over)
+            // - Yellow if already part of a found word
+            // - Light blue if it's just a normal cell
+            .background(isSelected ? Color.orange : (cell.isFound ? Color.yellow : Color.blue.opacity(0.1)))
             // Round the corners slightly for a modern look.
             .cornerRadius(4)
             // Add a subtle border around each cell.
@@ -40,10 +47,11 @@ struct WordSearchCellView: View {
 }
 
 #Preview {
-    // Previewing a single cell to see how it looks.
+    // Previewing a few cells to see the different states.
     HStack {
-        WordSearchCellView(cell: WordSearchCell(row: 0, column: 0, letter: "A", isFound: false))
-        WordSearchCellView(cell: WordSearchCell(row: 0, column: 1, letter: "B", isFound: true))
+        WordSearchCellView(cell: WordSearchCell(row: 0, column: 0, letter: "A", isFound: false), isSelected: false)
+        WordSearchCellView(cell: WordSearchCell(row: 0, column: 1, letter: "B", isFound: true), isSelected: false)
+        WordSearchCellView(cell: WordSearchCell(row: 0, column: 2, letter: "C", isFound: false), isSelected: true)
     }
     .padding()
 }

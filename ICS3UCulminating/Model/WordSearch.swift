@@ -92,28 +92,49 @@ struct WordSearch {
 
 // MARK: - Example Data
 
-/// A small example Word Search for testing and previews.
-/// This shows how we can manually create a simple 5x5 grid with some hidden words.
-let exampleWordSearch = WordSearch(
-    grid: [
-        // Row 0: Contains the word "SWIFT"
-        [WordSearchCell(row: 0, column: 0, letter: "S"), WordSearchCell(row: 0, column: 1, letter: "W"), WordSearchCell(row: 0, column: 2, letter: "I"), WordSearchCell(row: 0, column: 3, letter: "F"), WordSearchCell(row: 0, column: 4, letter: "T")],
-        
-        // Row 1: Random filler letters
-        [WordSearchCell(row: 1, column: 0, letter: "L"), WordSearchCell(row: 1, column: 1, letter: "X"), WordSearchCell(row: 1, column: 2, letter: "C"), WordSearchCell(row: 1, column: 3, letter: "O"), WordSearchCell(row: 1, column: 4, letter: "D")],
-        
-        // Row 2: Contains the word "APPLE"
-        [WordSearchCell(row: 2, column: 0, letter: "A"), WordSearchCell(row: 2, column: 1, letter: "P"), WordSearchCell(row: 2, column: 2, letter: "P"), WordSearchCell(row: 2, column: 3, letter: "L"), WordSearchCell(row: 2, column: 4, letter: "E")],
-        
-        // Row 3: Random filler letters
-        [WordSearchCell(row: 3, column: 0, letter: "X"), WordSearchCell(row: 3, column: 1, letter: "Y"), WordSearchCell(row: 3, column: 2, letter: "Z"), WordSearchCell(row: 3, column: 3, letter: "A"), WordSearchCell(row: 3, column: 4, letter: "B")],
-        
-        // Row 4: Contains the word "ROSS"
-        [WordSearchCell(row: 4, column: 0, letter: "R"), WordSearchCell(row: 4, column: 1, letter: "O"), WordSearchCell(row: 4, column: 2, letter: "S"), WordSearchCell(row: 4, column: 3, letter: "S"), WordSearchCell(row: 4, column: 4, letter: "Y")]
-    ],
-    words: [
-        WordToFind(text: "SWIFT"),
-        WordToFind(text: "APPLE"),
-        WordToFind(text: "ROSS")
-    ]
-)
+/// A helper function to create a 10x10 grid with some placeholder words.
+func createExample10x10Game() -> WordSearch {
+    let size = 10
+    var grid: [[WordSearchCell]] = []
+    
+    // Create a 10x10 grid filled with random letters
+    let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    for row in 0..<size {
+        var rowCells: [WordSearchCell] = []
+        for column in 0..<size {
+            let randomLetter = letters.randomElement() ?? "A"
+            rowCells.append(WordSearchCell(row: row, column: column, letter: randomLetter))
+        }
+        grid.append(rowCells)
+    }
+    
+    // Manually place some words for the example
+    let wordsToPlace = ["SWIFT", "XCODE", "APPLE", "IPHONE"]
+    
+    // Note: In a real game, we'd have a function to place these randomly.
+    // For now, let's just place them at fixed positions to ensure they fit.
+    
+    // SWIFT (Row 0, Horizontal)
+    for (index, char) in "SWIFT".enumerated() {
+        grid[0][index] = WordSearchCell(row: 0, column: index, letter: char)
+    }
+    
+    // XCODE (Column 9, Vertical)
+    for (index, char) in "XCODE".enumerated() {
+        grid[index][9] = WordSearchCell(row: index, column: 9, letter: char)
+    }
+    
+    // Create the WordToFind objects from the strings
+    var wordsToFind: [WordToFind] = []
+    for word in wordsToPlace {
+        wordsToFind.append(WordToFind(text: word))
+    }
+    
+    return WordSearch(
+        grid: grid,
+        words: wordsToFind
+    )
+}
+
+/// A 10x10 example Word Search for testing and previews.
+let exampleWordSearch = createExample10x10Game()

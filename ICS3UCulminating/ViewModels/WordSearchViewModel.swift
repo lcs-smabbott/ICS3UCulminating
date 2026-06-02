@@ -20,6 +20,10 @@ class WordSearchViewModel {
     /// By using @Observable, any changes to this property will automatically update the View.
     var game: WordSearch
     
+    /// Tracks the cells the user is currently dragging over.
+    /// This allows us to highlight the selection in real-time.
+    var selectedCells: [WordSearchCell] = []
+    
     // MARK: - Initializer
     
     /// Creates a new view model. 
@@ -30,21 +34,60 @@ class WordSearchViewModel {
     
     // MARK: - Functions
     
-    /// This function handles what happens when a player taps a cell.
-    /// For this basic version, it simply toggles the 'isFound' status of the cell.
-    /// In a full game, this would be part of a larger logic to check if a whole word was selected.
-    func toggleCellSelection(row: Int, column: Int) {
-        // We access the specific cell in the grid and change its found status.
-        game.grid[row][column].isFound.toggle()
+    /// Adds a cell to the current selection if it's not already there.
+    /// This is called as the user drags their finger across the grid.
+    func selectCell(row: Int, column: Int) {
+        // Make sure the row and column are valid
+        guard row >= 0 && row < game.grid.count,
+              column >= 0 && column < game.grid[0].count else {
+            return
+        }
         
-        // After toggling a cell, we might want to check if any words are now "found".
-        checkIfWordsAreFound()
+        let cell = game.grid[row][column]
+        
+        // Only add the cell if it's not already the last one selected
+        // (to avoid adding the same cell many times during a drag)
+        if selectedCells.last?.id != cell.id {
+            selectedCells.append(cell)
+        }
     }
     
-    /// A simple check to see if the words in our list match the "found" cells in the grid.
-    /// Note: This is a simplified version for demonstration.
-    func checkIfWordsAreFound() {
-        // In a real game, this would contain logic to see if a sequence of found cells
-        // forms one of the words in the 'game.words' list.
+    /// Checks if the current selection matches a word when the drag ends.
+    func finalizeSelection() {
+        // 1. Build the word from the selected letters
+        var selectedText = ""
+        for cell in selectedCells {
+            selectedText.append(cell.letter)
+        }
+        
+        // 2. Check if this text matches any of our target words
+        for i in 0..<game.words.count {
+            // Check both forward and backward (some word searches allow reverse)
+            let wordText = game.words[i].text
+            let reversedText = String(selectedText.reversed())
+            
+            if wordText == selectedText || wordText == reversedText {
+                // We found a match!
+                game.words[i].isFound = true
+                
+                // Mark all cells in the selection as "found" so they stay highlighted
+                for cell in selectedCells {
+                    game.grid[cell.row][cell.column].isFound = true
+                }
+            }
+        }
+        
+        // 3. Clear the temporary selection
+        selectedCells = []
+    }
+    
+    /// Helper to check if a specific cell is currently being dragged over.
+    func isCellSelected(row: Int, column: Int) -> Bool {
+        for cell in selectedCells {
+            if cell.row == row && cell.column == column {
+                return true
+            }
+        }
+        return false
     }
 }
