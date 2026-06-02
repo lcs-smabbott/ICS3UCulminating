@@ -15,6 +15,9 @@
 		B8C246EE2FCDDE6E008D23EC /* HouseItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8C246ED2FCDDE6E008D23EC /* HouseItemView.swift */; };
 		B8C246F02FCDDE6E008D23EC /* RELEASE.md in Resources */ = {isa = PBXBuildFile; fileRef = B8C246EF2FCDDE6E008D23EC /* RELEASE.md */; };
 		B8C246F52FCDE55F008D23EC /* WordSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8C246F42FCDE55F008D23EC /* WordSearch.swift */; };
+		B8C246F72FCF5C07008D23EC /* WordSearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8C246F62FCF5C07008D23EC /* WordSearchViewModel.swift */; };
+		B8C246F92FCF5C12008D23EC /* WordSearchCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8C246F82FCF5C12008D23EC /* WordSearchCellView.swift */; };
+		B8C246FB2FCF5C2A008D23EC /* WordSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8C246FA2FCF5C2A008D23EC /* WordSearchView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +30,9 @@
 		B8C246ED2FCDDE6E008D23EC /* HouseItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HouseItemView.swift; sourceTree = "<group>"; };
 		B8C246EF2FCDDE6E008D23EC /* RELEASE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = RELEASE.md; sourceTree = "<group>"; };
 		B8C246F42FCDE55F008D23EC /* WordSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSearch.swift; sourceTree = "<group>"; };
+		B8C246F62FCF5C07008D23EC /* WordSearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSearchViewModel.swift; sourceTree = "<group>"; };
+		B8C246F82FCF5C12008D23EC /* WordSearchCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSearchCellView.swift; sourceTree = "<group>"; };
+		B8C246FA2FCF5C2A008D23EC /* WordSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSearchView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +88,7 @@
 			isa = PBXGroup;
 			children = (
 				B8C246E82FCDDE6E008D23EC /* HouseListViewModel.swift */,
+				B8C246F62FCF5C07008D23EC /* WordSearchViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -91,6 +98,8 @@
 			children = (
 				B8C246EB2FCDDE6E008D23EC /* HousesListView.swift */,
 				B8C246ED2FCDDE6E008D23EC /* HouseItemView.swift */,
+				B8C246F82FCF5C12008D23EC /* WordSearchCellView.swift */,
+				B8C246FA2FCF5C2A008D23EC /* WordSearchView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -168,8 +177,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B8C246F92FCF5C12008D23EC /* WordSearchCellView.swift in Sources */,
 				B8C246EE2FCDDE6E008D23EC /* HouseItemView.swift in Sources */,
+				B8C246FB2FCF5C2A008D23EC /* WordSearchView.swift in Sources */,
 				B8C246E62FCDDE6E008D23EC /* House.swift in Sources */,
+				B8C246F72FCF5C07008D23EC /* WordSearchViewModel.swift in Sources */,
 				B8C246EC2FCDDE6E008D23EC /* HousesListView.swift in Sources */,
 				B8C246E92FCDDE6E008D23EC /* HouseListViewModel.swift in Sources */,
 				B8C246E12FCDDE6E008D23EC /* ICS3UCulminatingApp.swift in Sources */,
