@@ -29,6 +29,12 @@ class WordSearchViewModel {
     /// Stores any error messages (e.g., if the device doesn't support AI).
     var errorMessage: String?
     
+    /// User-customizable grid size (e.g., 10 means 10x10).
+    var gridSize: Int = 10
+    
+    /// User-customizable number of words to generate.
+    var wordCount: Int = 6
+    
     // MARK: - Initializer
     
     init(game: WordSearch = exampleWordSearch) {
@@ -55,23 +61,23 @@ class WordSearchViewModel {
             // 4. Start a communication session.
             let session = LanguageModelSession(model: model)
             
-            // 5. Build the prompt. We give the AI specific constraints to help it succeed.
-            let aiPrompt = Prompt("Generate a Word Search theme for: \(promptText). Provide 5 to 8 words that are 3 to 8 letters long.")
+            // 5. Build the prompt. We use the user's desired 'wordCount' and 'gridSize'.
+            let aiPrompt = Prompt("Generate a Word Search theme for: \(promptText). Provide exactly \(wordCount) words that are 3 to \(gridSize - 2) letters long.")
             
             // 6. Guided Generation: The AI returns a 'WordSearchTheme' object automatically!
             let response = try await session.respond(to: aiPrompt, generating: WordSearchTheme.self)
             let theme = response.content
             
             // 7. Take the AI's words and try to "hide" them in a new grid.
-            if let newGame = createGame(with: theme.words) {
+            if let newGame = createGame(with: theme.words, size: gridSize) {
                 // 'await MainActor.run' ensures we update the UI properties on the main thread.
                 await MainActor.run {
                     self.game = newGame
                     self.isGenerating = false
                 }
             } else {
-                // This happens if the words were too long or too many to fit in a 10x10.
-                throw NSError(domain: "WordSearch", code: 1, userInfo: [NSLocalizedDescriptionKey: "The grid was too crowded! Try a different prompt."])
+                // This happens if the words were too long or too many to fit.
+                throw NSError(domain: "WordSearch", code: 1, userInfo: [NSLocalizedDescriptionKey: "The grid was too crowded! Try a larger grid or fewer words."])
             }
             
         } catch {
@@ -86,12 +92,11 @@ class WordSearchViewModel {
     // MARK: - Grid Placement Logic
     
     /// This complex function builds a fresh grid from scratch.
-    private func createGame(with words: [String]) -> WordSearch? {
-        let size = 10
+    private func createGame(with words: [String], size: Int) -> WordSearch? {
         var grid: [[WordSearchCell]] = []
         let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         
-        // Step 1: Create a 10x10 grid filled with spaces (" ").
+        // Step 1: Create a grid of the requested size filled with spaces (" ").
         for row in 0..<size {
             var rowCells: [WordSearchCell] = []
             for col in 0..<size {
@@ -104,7 +109,7 @@ class WordSearchViewModel {
         var placedWords: [String] = []
         for word in words {
             let upperWord = word.uppercased().trimmingCharacters(in: .whitespaces)
-            // If the word is too long for a 10x10, we just skip it.
+            // If the word is too long for the requested grid size, we just skip it.
             if upperWord.count > size { continue }
             
             if placeWord(upperWord, in: &grid) {
@@ -112,7 +117,7 @@ class WordSearchViewModel {
             }
         }
         
-        // Fail if we couldn't place at least a few words.
+        // Fail if we couldn't place any words.
         if placedWords.isEmpty { return nil }
         
         // Step 3: Replace all remaining " " spaces with random random letters.
@@ -162,7 +167,7 @@ class WordSearchViewModel {
         for i in 0..<chars.count {
             let nr = r + i * dr
             let nc = c + i * dc
-            // 1. Is it outside the 10x10 boundary?
+            // 1. Is it outside the grid boundary?
             if nr < 0 || nr >= size || nc < 0 || nc >= size { return false }
             // 2. Is there already a DIFFERENT letter there? (Intersections are okay!)
             let existing = grid[nr][nc].letter

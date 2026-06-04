@@ -61,19 +61,54 @@ struct WordSearchView: View {
                     .shadow(radius: 5)
                     .frame(minWidth: 400, maxWidth: 600, minHeight: 400, maxHeight: 600)
                     
-                    // 2. The Side Panel (AI Prompt & Word List)
+                    // 2. The Side Panel (AI Prompt, Customization & Word List)
                     VStack(alignment: .leading, spacing: 20) {
                         
-                        // AI Prompt Section
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Create Custom Theme")
+                        // AI Prompt & Customization Section
+                        VStack(alignment: .leading, spacing: 15) {
+                            Text("Custom Game Settings")
                                 .font(.headline)
                             
-                            TextField("e.g., Solar System, Countries...", text: $userPrompt)
-                                .textFieldStyle(.roundedBorder)
-                                .onSubmit {
-                                    startAIGeneration()
+                            // Theme Input
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("Theme")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                TextField("e.g., Space, Ocean...", text: $userPrompt)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                            
+                            // Grid Size Customization
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack {
+                                    Text("Grid Size:")
+                                    Spacer()
+                                    Text("\(viewModel.gridSize)x\(viewModel.gridSize)")
+                                        .fontWeight(.bold)
                                 }
+                                .font(.caption)
+                                
+                                Slider(value: Binding(
+                                    get: { Double(viewModel.gridSize) },
+                                    set: { viewModel.gridSize = Int($0) }
+                                ), in: 8...15, step: 1)
+                            }
+                            
+                            // Word Count Customization
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack {
+                                    Text("Words to Find:")
+                                    Spacer()
+                                    Text("\(viewModel.wordCount)")
+                                        .fontWeight(.bold)
+                                }
+                                .font(.caption)
+                                
+                                Slider(value: Binding(
+                                    get: { Double(viewModel.wordCount) },
+                                    set: { viewModel.wordCount = Int($0) }
+                                ), in: 3...12, step: 1)
+                            }
                             
                             Button(action: startAIGeneration) {
                                 Label("Generate with AI", systemImage: "sparkles")
@@ -82,10 +117,18 @@ struct WordSearchView: View {
                             .buttonStyle(.borderedProminent)
                             .disabled(userPrompt.isEmpty || viewModel.isGenerating)
                             
+                            // Note for the user about Apple Intelligence requirements.
+                            Text("Note: Apple Intelligence must be enabled in System Settings for this feature to work.")
+                                .font(.system(size: 9))
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: .infinity)
+                            
                             if let error = viewModel.errorMessage {
                                 Text(error)
                                     .font(.caption)
                                     .foregroundColor(.red)
+                                    .multilineTextAlignment(.center)
                             }
                         }
                         .padding()
@@ -122,7 +165,7 @@ struct WordSearchView: View {
                             }
                         }
                     }
-                    .frame(width: 280)
+                    .frame(width: 300)
                     .padding()
                 }
                 .padding()
