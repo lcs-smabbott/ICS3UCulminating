@@ -11,28 +11,33 @@ import FoundationModels
 // VIEW MODEL
 
 /// This class manages the state and logic for the Word Search game.
-/// It uses Apple's Foundation Models to create custom word searches.
 @Observable
 class WordSearchViewModel {
     
     // MARK: - Stored properties
     
-    /// The current state of the game (the grid and words).
+    /// The current state of the game.
     var game: WordSearch
     
-    /// Tracks the cells the user is currently dragging over to highlight them orange.
+    /// Tracks the cells currently highlighted by the user.
     var selectedCells: [WordSearchCell] = []
     
-    /// A flag to tell the View when to show the "AI is thinking..." loading screen.
+    /// Tracks where the user first started their selection.
+    private var startCell: WordSearchCell?
+    
+    /// UI State
     var isGenerating: Bool = false
-    
-    /// Stores any error messages (e.g., if the device doesn't support AI).
     var errorMessage: String?
+    var themeTitle: String = "Word Search"
     
-    /// User-customizable grid size (e.g., 10 means 10x10).
+    /// Tracks if a word was JUST found (to trigger a celebration).
+    var showConfetti: Bool = false
+    
+    /// Tracks if the entire game is complete.
+    var isGameComplete: Bool = false
+    
+    /// Configuration
     var gridSize: Int = 10
-    
-    /// User-customizable number of words to generate.
     var wordCount: Int = 6
     
     // MARK: - Initializer
@@ -43,45 +48,34 @@ class WordSearchViewModel {
     
     // MARK: - AI Functions
     
-    /// Connects to Apple's on-device AI to generate a list of words.
     func generateNewGame(from promptText: String) async {
-        // 1. Reset state: Show loader and hide old errors.
         isGenerating = true
         errorMessage = nil
         
         do {
-            // 2. Access the system model (Apple Intelligence).
             let model = SystemLanguageModel.default
-            
-            // 3. Safety check: Is AI actually ready/enabled on this Mac?
             if !model.isAvailable {
-                throw NSError(domain: "WordSearch", code: 2, userInfo: [NSLocalizedDescriptionKey: "Apple Intelligence is not available. Ensure you have an M-series Mac and it's enabled in Settings."])
+                throw NSError(domain: "WordSearch", code: 2, userInfo: [NSLocalizedDescriptionKey: "Apple Intelligence not available."])
             }
             
-            // 4. Start a communication session.
             let session = LanguageModelSession(model: model)
-            
-            // 5. Build the prompt. We use the user's desired 'wordCount' and 'gridSize'.
             let aiPrompt = Prompt("Generate a Word Search theme for: \(promptText). Provide exactly \(wordCount) words that are 3 to \(gridSize - 2) letters long.")
             
-            // 6. Guided Generation: The AI returns a 'WordSearchTheme' object automatically!
             let response = try await session.respond(to: aiPrompt, generating: WordSearchTheme.self)
             let theme = response.content
             
-            // 7. Take the AI's words and try to "hide" them in a new grid.
             if let newGame = createGame(with: theme.words, size: gridSize) {
-                // 'await MainActor.run' ensures we update the UI properties on the main thread.
                 await MainActor.run {
+                    self.themeTitle = theme.title
                     self.game = newGame
                     self.isGenerating = false
+                    self.isGameComplete = false // Reset completion state for new game
+                    self.selectedCells = []
                 }
             } else {
-                // This happens if the words were too long or too many to fit.
-                throw NSError(domain: "WordSearch", code: 1, userInfo: [NSLocalizedDescriptionKey: "The grid was too crowded! Try a larger grid or fewer words."])
+                throw NSError(domain: "WordSearch", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not fit words."])
             }
-            
         } catch {
-            // Catch any AI errors (like no internet, or model busy).
             await MainActor.run {
                 self.errorMessage = "AI Error: \(error.localizedDescription)"
                 self.isGenerating = false
@@ -89,14 +83,12 @@ class WordSearchViewModel {
         }
     }
     
-    // MARK: - Grid Placement Logic
+    // MARK: - Grid Generation
     
-    /// This complex function builds a fresh grid from scratch.
     private func createGame(with words: [String], size: Int) -> WordSearch? {
         var grid: [[WordSearchCell]] = []
         let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         
-        // Step 1: Create a grid of the requested size filled with spaces (" ").
         for row in 0..<size {
             var rowCells: [WordSearchCell] = []
             for col in 0..<size {
@@ -105,22 +97,18 @@ class WordSearchViewModel {
             grid.append(rowCells)
         }
         
-        // Step 2: Try to place every word the AI gave us.
         var placedWords: [String] = []
         for word in words {
             let upperWord = word.uppercased().trimmingCharacters(in: .whitespaces)
-            // If the word is too long for the requested grid size, we just skip it.
-            if upperWord.count > size { continue }
+            if upperWord.count > size || upperWord.count < 2 { continue }
             
             if placeWord(upperWord, in: &grid) {
                 placedWords.append(upperWord)
             }
         }
         
-        // Fail if we couldn't place any words.
         if placedWords.isEmpty { return nil }
         
-        // Step 3: Replace all remaining " " spaces with random random letters.
         for row in 0..<size {
             for col in 0..<size {
                 if grid[row][col].letter == " " {
@@ -129,102 +117,183 @@ class WordSearchViewModel {
             }
         }
         
-        // Step 4: Wrap it up in a WordSearch model.
-        let wordsToFind = placedWords.map { WordToFind(text: $0) }
-        return WordSearch(grid: grid, words: wordsToFind)
+        return WordSearch(grid: grid, words: placedWords.map { WordToFind(text: $0) })
     }
     
-    /// This function tries 100 times to find a random spot and direction for a word.
     private func placeWord(_ word: String, in grid: inout [[WordSearchCell]]) -> Bool {
         let size = grid.count
-        // These represent (row change, column change) for all 8 directions.
-        let directions: [(Int, Int)] = [
-            (0, 1), (0, -1), (1, 0), (-1, 0), // L->R, R->L, Top->Down, Down->Top
-            (1, 1), (1, -1), (-1, 1), (-1, -1) // All 4 Diagonals
-        ]
-        
+        let directions: [(Int, Int)] = [(0,1), (0,-1), (1,0), (-1,0), (1,1), (1,-1), (-1,1), (-1,-1)]
         let chars = Array(word)
         
-        // Try random spots until we find one that works or we run out of tries.
         for _ in 0..<100 {
             let startRow = Int.random(in: 0..<size)
             let startCol = Int.random(in: 0..<size)
             let dir = directions.randomElement()!
             
-            // Check: "Can the word fit here without hitting edges or other words?"
             if canPlace(chars, in: grid, at: startRow, col: startCol, dr: dir.0, dc: dir.1) {
-                // If yes, actually write the letters into the grid.
-                insert(chars, in: &grid, at: startRow, col: startCol, dr: dir.0, dc: dir.1)
+                for i in 0..<chars.count {
+                    let nr = startRow + i * dir.0
+                    let nc = startCol + i * dir.1
+                    grid[nr][nc] = WordSearchCell(row: nr, column: nc, letter: chars[i])
+                }
                 return true
             }
         }
         return false
     }
     
-    /// Helper: Checks every letter of a word to see if the path is clear.
     private func canPlace(_ chars: [Character], in grid: [[WordSearchCell]], at r: Int, col c: Int, dr: Int, dc: Int) -> Bool {
         let size = grid.count
         for i in 0..<chars.count {
             let nr = r + i * dr
             let nc = c + i * dc
-            // 1. Is it outside the grid boundary?
             if nr < 0 || nr >= size || nc < 0 || nc >= size { return false }
-            // 2. Is there already a DIFFERENT letter there? (Intersections are okay!)
             let existing = grid[nr][nc].letter
             if existing != " " && existing != chars[i] { return false }
         }
         return true
     }
     
-    /// Helper: Actually puts the characters into the 2D grid.
-    private func insert(_ chars: [Character], in grid: inout [[WordSearchCell]], at r: Int, col c: Int, dr: Int, dc: Int) {
-        for i in 0..<chars.count {
-            let nr = r + i * dr
-            let nc = c + i * dc
-            grid[nr][nc] = WordSearchCell(row: nr, column: nc, letter: chars[i])
-        }
-    }
+    // MARK: - Interaction Functions (Simplified)
     
-    // MARK: - Interaction Functions
-    
-    /// Adds a cell to the current 'selection path' while the user is dragging.
-    func selectCell(row: Int, column: Int) {
-        guard row >= 0 && row < game.grid.count, column >= 0 && column < game.grid[0].count else { return }
-        
+    /// Starts a new selection (used by both tap and drag).
+    func startSelection(row: Int, column: Int) {
         let cell = game.grid[row][column]
-        // Avoid adding the exact same cell twice in a row.
-        if selectedCells.last?.id != cell.id {
-            selectedCells.append(cell)
-        }
+        startCell = cell
+        selectedCells = [cell]
     }
     
-    /// Checks if the user's drag matches a word.
-    func finalizeSelection() {
-        // Build the string from the selected tiles.
-        var selectedText = ""
-        for cell in selectedCells {
-            selectedText.append(cell.letter)
+    /// Continues a selection (used during dragging).
+    func updateDragSelection(row: Int, column: Int) {
+        guard let start = startCell else { return }
+        
+        // Straight-line snap logic
+        let dr = row - start.row
+        let dc = column - start.column
+        
+        var targetRow = row
+        var targetCol = column
+        
+        let absDr = abs(dr)
+        let absDc = abs(dc)
+        
+        if absDr > absDc * 2 {
+            targetCol = start.column
+        } else if absDc > absDr * 2 {
+            targetRow = start.row
+        } else {
+            let step = max(absDr, absDc)
+            targetRow = start.row + (dr > 0 ? step : (dr < 0 ? -step : 0))
+            targetCol = start.column + (dc > 0 ? step : (dc < 0 ? -step : 0))
         }
         
-        // Compare against every word in our list.
+        targetRow = max(0, min(targetRow, game.grid.count - 1))
+        targetCol = max(0, min(targetCol, game.grid[0].count - 1))
+        
+        let finalDr = targetRow - start.row
+        let finalDc = targetCol - start.column
+        let steps = max(abs(finalDr), abs(finalDc))
+        
+        var newPath: [WordSearchCell] = []
+        if steps == 0 {
+            newPath.append(start)
+        } else {
+            let stepR = finalDr / steps
+            let stepC = finalDc / steps
+            for i in 0...steps {
+                newPath.append(game.grid[start.row + i * stepR][start.column + i * stepC])
+            }
+        }
+        
+        self.selectedCells = newPath
+    }
+    
+    /// Handles tapping a cell one-by-one.
+    func handleTap(row: Int, column: Int) {
+        let cell = game.grid[row][column]
+        
+        // If we have a selection, check if the new tap is "in-line"
+        if let last = selectedCells.last, selectedCells.count >= 1 {
+            // Check if we are continuing the existing line
+            if selectedCells.count == 1 {
+                // Second cell: sets the direction
+                selectedCells.append(cell)
+            } else {
+                // Third+ cell: must follow the existing direction
+                let first = selectedCells[0]
+                let second = selectedCells[1]
+                let dr = second.row - first.row
+                let dc = second.column - first.column
+                
+                let expectedRow = last.row + dr
+                let expectedCol = last.column + dc
+                
+                if row == expectedRow && column == expectedCol {
+                    selectedCells.append(cell)
+                } else {
+                    // Start a new selection if tap is out of line
+                    startSelection(row: row, column: column)
+                }
+            }
+        } else {
+            startSelection(row: row, column: column)
+        }
+        
+        checkIfWordFound()
+    }
+    
+    /// Checks if selection is a word; if so, marks it permanently.
+    func checkIfWordFound() {
+        let selectedText = selectedCells.map { String($0.letter) }.joined()
+        let reversedText = String(selectedText.reversed())
+        
         for i in 0..<game.words.count {
-            let wordText = game.words[i].text
-            let reversedText = String(selectedText.reversed())
-            
-            // Match found (either forward or backward)!
-            if wordText == selectedText || wordText == reversedText {
+            if !game.words[i].isFound && (game.words[i].text == selectedText || game.words[i].text == reversedText) {
+                // MARK: SUCCESS - Word Found!
                 game.words[i].isFound = true
-                // Permanently highlight these cells yellow.
                 for cell in selectedCells {
                     game.grid[cell.row][cell.column].isFound = true
                 }
+                
+                // Trigger the "Word Found" celebration
+                self.showConfetti = true
+                
+                // Clear the message after 2 seconds
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    self.showConfetti = false
+                }
+                
+                // Check if the WHOLE game is finished
+                checkGameCompletion()
+                
+                selectedCells = [] // Clear selection after finding
+                return
             }
         }
-        // Clear the temporary orange drag selection.
-        selectedCells = []
     }
     
-    /// Used by the View to know if a specific square should be orange.
+    /// Checks if every single word in the list has been found.
+    private func checkGameCompletion() {
+        var allFound = true
+        for word in game.words {
+            if !word.isFound {
+                allFound = false
+                break
+            }
+        }
+        
+        if allFound {
+            self.isGameComplete = true
+        }
+    }
+    
+    /// Finalizes a drag. If no word was found, clear the highlight.
+    func endInteraction() {
+        checkIfWordFound()
+        selectedCells = []
+        startCell = nil
+    }
+    
     func isCellSelected(row: Int, column: Int) -> Bool {
         for cell in selectedCells {
             if cell.row == row && cell.column == column { return true }

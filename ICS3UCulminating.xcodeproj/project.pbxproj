@@ -19,6 +19,7 @@
 		B8C246F92FCF5C12008D23EC /* WordSearchCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8C246F82FCF5C12008D23EC /* WordSearchCellView.swift */; };
 		B8C246FB2FCF5C2A008D23EC /* WordSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8C246FA2FCF5C2A008D23EC /* WordSearchView.swift */; };
 		B8C246FD2FD1AE48008D23EC /* WordSearchAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8C246FC2FD1AE48008D23EC /* WordSearchAI.swift */; };
+		B8C246FF2FD1BA68008D23EC /* ConfettiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8C246FE2FD1BA67008D23EC /* ConfettiView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +36,7 @@
 		B8C246F82FCF5C12008D23EC /* WordSearchCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSearchCellView.swift; sourceTree = "<group>"; };
 		B8C246FA2FCF5C2A008D23EC /* WordSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSearchView.swift; sourceTree = "<group>"; };
 		B8C246FC2FD1AE48008D23EC /* WordSearchAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSearchAI.swift; sourceTree = "<group>"; };
+		B8C246FE2FD1BA67008D23EC /* ConfettiView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfettiView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,6 +105,7 @@
 				B8C246ED2FCDDE6E008D23EC /* HouseItemView.swift */,
 				B8C246F82FCF5C12008D23EC /* WordSearchCellView.swift */,
 				B8C246FA2FCF5C2A008D23EC /* WordSearchView.swift */,
+				B8C246FE2FD1BA67008D23EC /* ConfettiView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -180,6 +183,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B8C246FF2FD1BA68008D23EC /* ConfettiView.swift in Sources */,
 				B8C246F92FCF5C12008D23EC /* WordSearchCellView.swift in Sources */,
 				B8C246FD2FD1AE48008D23EC /* WordSearchAI.swift in Sources */,
 				B8C246EE2FCDDE6E008D23EC /* HouseItemView.swift in Sources */,
