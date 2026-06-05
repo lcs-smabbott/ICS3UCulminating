@@ -86,6 +86,25 @@ class WordSearchViewModel {
         }
     }
     
+    /// Creates a game using a list of words provided directly by the user.
+    /// This bypasses the AI and goes straight to the grid placement logic.
+    func generateManualGame(with words: [String]) {
+        // Clear any old error messages
+        errorMessage = nil
+        
+        // Use our same 'createGame' logic to hide the user's words in the grid.
+        if let newGame = createGame(with: words, size: gridSize) {
+            // If successful, update the game state
+            self.game = newGame
+            self.themeTitle = "Custom Game"
+            self.isGameComplete = false
+            self.selectedCells = []
+        } else {
+            // If the words don't fit (e.g., too many long words), show an error.
+            self.errorMessage = "Could not fit all words. Try a larger grid or fewer/shorter words."
+        }
+    }
+    
     // MARK: - Grid Generation
     
     /// Creates a fresh grid and hides the provided words inside it.
