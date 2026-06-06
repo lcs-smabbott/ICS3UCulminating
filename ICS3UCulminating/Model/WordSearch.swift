@@ -7,34 +7,37 @@
 
 import Foundation
 
-// MODEL
+// MARK: - MODEL LAYER
+// The Model Layer contains the "Nouns" of our application. 
+// It defines the data structures that represent what a Word Search game IS.
 
-/// Represents a single cell in the Word Search grid.
-/// This structure stores the information for one "tile" in the game.
+/// Represents a single cell (square) in the Word Search grid.
+/// Every letter you see on the board is one of these cells.
 struct WordSearchCell: Identifiable {
     
     // MARK: - Stored properties
     
     /// Unique identifier for the cell. 
-    /// This is needed so SwiftUI can keep track of which cell is which when displaying them in a list or grid.
+    /// Required by the 'Identifiable' protocol so SwiftUI can track this specific cell in a grid.
     let id = UUID()
     
-    /// The row position of the cell in the grid (e.g., Row 0 is the top row).
+    /// The horizontal row index (0 is top). 
+    /// We store this so the cell "knows" where it lives in the 2D array.
     let row: Int
     
-    /// The column position of the cell in the grid (e.g., Column 0 is the leftmost column).
+    /// The vertical column index (0 is leftmost).
     let column: Int
     
-    /// The letter contained within the cell (e.g., 'A', 'B', 'C').
+    /// The actual character shown to the user (e.g., 'A', 'Z').
     let letter: Character
     
-    /// Whether this cell is part of a word that has been successfully found.
-    /// We use this to change the appearance of the cell (like highlighting it) when the player finds a word.
+    /// A state variable that tracks if this specific letter has been found as part of a word.
+    /// When this is true, the View will highlight this cell permanently.
     var isFound: Bool
     
     // MARK: - Initializer
     
-    /// Creates a new cell with a specific position and letter.
+    /// Creates a new cell. By default, 'isFound' is false because the game just started.
     init(row: Int, column: Int, letter: Character, isFound: Bool = false) {
         self.row = row
         self.column = column
@@ -43,20 +46,19 @@ struct WordSearchCell: Identifiable {
     }
 }
 
-/// Represents a word that the player needs to find in the Word Search grid.
+/// Represents a word that the player is looking for.
 struct WordToFind: Identifiable {
     
     // MARK: - Stored properties
     
-    /// Unique identifier for the word.
-    /// Just like the cell, this helps SwiftUI identify each word uniquely in the list.
+    /// Unique identifier for the word in the list.
     let id = UUID()
     
-    /// The text of the word (e.g., "SWIFT").
+    /// The string representation of the word (e.g., "SWIFT").
     let text: String
     
-    /// Whether the word has been found in the grid.
-    /// We use this to "cross off" the word from the list once the player finds it.
+    /// Tracks if the player has successfully highlighted this word in the grid.
+    /// When this is true, the word will be crossed off in the sidebar list.
     var isFound: Bool
     
     // MARK: - Initializer
@@ -68,91 +70,41 @@ struct WordToFind: Identifiable {
     }
 }
 
-/// Represents the overall state of a Word Search game.
-/// This is the "master" structure that holds both the grid and the list of words.
+/// The master structure that holds the entire state of a single Word Search game.
 struct WordSearch {
     
     // MARK: - Stored properties
     
-    /// The 2D grid of cells. 
-    /// It's an array of arrays: the outer array represents rows, and each inner array contains the cells for that row.
+    /// The 2D Grid.
+    /// It's an "Array of Arrays". grid[0] is the first row, grid[0][0] is the top-left cell.
     var grid: [[WordSearchCell]]
     
-    /// The list of words that are hidden in the grid for the player to find.
+    /// The list of target words hidden within the grid.
     var words: [WordToFind]
     
     // MARK: - Initializer
     
-    /// Creates a new game instance with a provided grid and word list.
+    /// Creates a new game instance.
     init(grid: [[WordSearchCell]], words: [WordToFind]) {
         self.grid = grid
         self.words = words
     }
 }
 
-// MARK: - Example Data
+// MARK: - FALLBACK DATA
 
-/// A helper function to create a 10x10 grid with some placeholder words.
-func createExample10x10Game() -> WordSearch {
-    let size = 10
-    var grid: [[WordSearchCell]] = []
-    
-    // Create a 10x10 grid filled with random letters
-    let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    for row in 0..<size {
-        var rowCells: [WordSearchCell] = []
-        for column in 0..<size {
-            let randomLetter = letters.randomElement() ?? "A"
-            rowCells.append(WordSearchCell(row: row, column: column, letter: randomLetter))
-        }
-        grid.append(rowCells)
-    }
-    
-    // Manually place some words for the example
-    // We make sure these words are actually placed in the grid letters!
-    let wordsToPlace = ["SWIFT", "XCODE", "APPLE", "IPHONE", "IPAD"]
-    
-    // SWIFT (Row 0, Columns 0-4)
-    let swift = "SWIFT"
-    for (index, char) in swift.enumerated() {
-        grid[0][index] = WordSearchCell(row: 0, column: index, letter: char)
-    }
-    
-    // XCODE (Row 2, Columns 0-4)
-    let xcode = "XCODE"
-    for (index, char) in xcode.enumerated() {
-        grid[2][index] = WordSearchCell(row: 2, column: index, letter: char)
-    }
-    
-    // APPLE (Row 4, Columns 0-4)
-    let apple = "APPLE"
-    for (index, char) in apple.enumerated() {
-        grid[4][index] = WordSearchCell(row: 4, column: index, letter: char)
-    }
-    
-    // IPHONE (Column 9, Rows 0-5)
-    let iphone = "IPHONE"
-    for (index, char) in iphone.enumerated() {
-        grid[index][9] = WordSearchCell(row: index, column: 9, letter: char)
-    }
-    
-    // IPAD (Column 7, Rows 5-8)
-    let ipad = "IPAD"
-    for (index, char) in ipad.enumerated() {
-        grid[5 + index][7] = WordSearchCell(row: 5 + index, column: 7, letter: char)
-    }
-    
-    // Create the WordToFind objects from the strings
-    var wordsToFind: [WordToFind] = []
-    for word in wordsToPlace {
-        wordsToFind.append(WordToFind(text: word))
-    }
-    
-    return WordSearch(
-        grid: grid,
-        words: wordsToFind
-    )
-}
-
-/// A 10x10 example Word Search for testing and previews.
-let exampleWordSearch = createExample10x10Game()
+/// A simple 5x5 example used as a safety fallback if the generator fails.
+let exampleWordSearch = WordSearch(
+    grid: [
+        [WordSearchCell(row: 0, column: 0, letter: "S"), WordSearchCell(row: 0, column: 1, letter: "W"), WordSearchCell(row: 0, column: 2, letter: "I"), WordSearchCell(row: 0, column: 3, letter: "F"), WordSearchCell(row: 0, column: 4, letter: "T")],
+        [WordSearchCell(row: 1, column: 0, letter: "L"), WordSearchCell(row: 1, column: 1, letter: "X"), WordSearchCell(row: 1, column: 2, letter: "C"), WordSearchCell(row: 1, column: 3, letter: "O"), WordSearchCell(row: 1, column: 4, letter: "D")],
+        [WordSearchCell(row: 2, column: 0, letter: "A"), WordSearchCell(row: 2, column: 1, letter: "P"), WordSearchCell(row: 2, column: 2, letter: "P"), WordSearchCell(row: 2, column: 3, letter: "L"), WordSearchCell(row: 2, column: 4, letter: "E")],
+        [WordSearchCell(row: 3, column: 0, letter: "X"), WordSearchCell(row: 3, column: 1, letter: "Y"), WordSearchCell(row: 3, column: 2, letter: "Z"), WordSearchCell(row: 3, column: 3, letter: "A"), WordSearchCell(row: 3, column: 4, letter: "B")],
+        [WordSearchCell(row: 4, column: 0, letter: "R"), WordSearchCell(row: 4, column: 1, letter: "O"), WordSearchCell(row: 4, column: 2, letter: "S"), WordSearchCell(row: 4, column: 3, letter: "S"), WordSearchCell(row: 4, column: 4, letter: "Y")]
+    ],
+    words: [
+        WordToFind(text: "SWIFT"),
+        WordToFind(text: "APPLE"),
+        WordToFind(text: "ROSS")
+    ]
+)

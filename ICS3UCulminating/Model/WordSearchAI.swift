@@ -8,19 +8,24 @@
 import Foundation
 import FoundationModels
 
-// MODEL - AI Integration
+// MARK: - AI MODEL LAYER
+// This file handles the data transfer between Apple Intelligence and our app.
 
-/// A structure that the AI model will use to provide a list of words.
-/// The @Generable macro is a special instruction to Apple's AI framework.
-/// It tells the AI: "Whatever you generate, it MUST fit into this exact structure."
-/// This prevents the AI from just talking to us; it forces it to give us clean data.
+/// A structure that defines the "Contract" between our code and the AI.
+/// The '@Generable' macro is a modern Swift feature for Apple Intelligence.
+/// It tells the on-device Large Language Model (LLM): 
+/// "I am going to ask you a question, and I want you to fill out this specific structure with the answer."
 @Generable
 struct WordSearchTheme {
-    /// A short title for the theme (e.g., "The Solar System").
-    /// The AI decides this based on the user's prompt.
+    
+    /// The AI's creative name for the puzzle based on your prompt.
+    /// For example: If you prompt "Ocean", the AI might return "Depths of the Pacific".
     var title: String
     
-    /// A list of 5 to 10 words related to the theme.
-    /// The AI will provide these as an array of Strings.
+    /// The list of words that fit the theme.
+    /// By using [String], we tell the AI to give us an array of text, which we will then hide in our grid.
     var words: [String]
 }
+
+// NOTE: All generation happens locally on your Mac's M-series chip. 
+// No data is sent to a server for this specific prompt!
